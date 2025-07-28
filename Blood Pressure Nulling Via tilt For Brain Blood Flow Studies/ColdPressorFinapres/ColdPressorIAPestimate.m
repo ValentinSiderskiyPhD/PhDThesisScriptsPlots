@@ -41,7 +41,7 @@ MAP_time = [10, 11, 12];  % 10 marks baseline period on x-axis
 MAP_vital_raw = [baseline_MAP_vital, MAP_vital_all(idx11), MAP_vital_all(idx12)];
 MAP_finap_raw = [baseline_MAP_finap,  MAP_finap_all(idx11),  MAP_finap_all(idx12)];
 
-%% Align Finapres MAP so that its baseline matches the Vitalmap baseline
+%% Align Finapres MAP to match Vitalmap baseline
 MAP_finap_shifted = MAP_finap_raw - baseline_MAP_finap + baseline_MAP_vital;
 
 %% Estimate MAP SEM for these three points
@@ -56,63 +56,47 @@ map_err_finap = [
     sqrt((2/3*baseline_dia_err_finap)^2 + (1/3*finapres_err(idx12))^2)
 ];
 
-%% Plotting side by side
-figure('Color','w','Position',[100 100 1400 500]);
+%% Project central MAP at 12 min
+sbp_change_frac = (vitalmap_sys(idx12) - baseline_sys_avg_vital) / baseline_sys_avg_vital;
+central_sys_12  = baseline_sys_avg_vital * (1 + 1.35 * sbp_change_frac);
+central_map_12  = diastolic_vital(idx12) + (central_sys_12 - diastolic_vital(idx12)) / 3;
+% Error for projected central MAP
+central_sys_err = vitalmap_err(idx12) * 1.35;
+central_map_err = (1/3) * central_sys_err;
 
-% --- Plot 1: Systolic & Diastolic ---
-subplot(1,2,1);
+%% Plot MAP comparison with projected central MAP
+figure('Color','w','Position',[600 300 700 500]);
 hold on;
-% Determine y?limits
-ymin1 = min([vitalmap_sys-vitalmap_err; finapres_sys-finapres_err; diastolic_vital']) - 5;
-ymax1 = max([vitalmap_sys+vitalmap_err; finapres_sys+finapres_err; diastolic_finap']) + 5;
-% Shaded Rest period (no legend entry)
-hRest = fill([0 10 10 0],[ymin1 ymin1 ymax1 ymax1],[.92 .92 .92],...
-    'EdgeColor','none','FaceAlpha',.3);
-hRest.Annotation.LegendInformation.IconDisplayStyle = 'off';
-% Shaded Cold Pressor period
-hCPT1 = fill([10 12 12 10],[ymin1 ymin1 ymax1 ymax1],[.8 .9 1],...
-    'EdgeColor','none','FaceAlpha',.3);
-hCPT1.Annotation.LegendInformation.IconDisplayStyle = 'off';
-% Labels
-text(5,  ymax1-2,'Rest','FontSize',12,'FontWeight','bold','HorizontalAlignment','center');
-text(11, ymax1-2,'Cold Pressor Test','FontSize',12,'FontWeight','bold','HorizontalAlignment','center');
-% Plot data
-errorbar(time, vitalmap_sys, vitalmap_err, 'o--','Color',[.2 .2 .2],...
-    'MarkerFaceColor','w','LineWidth',1.5,'DisplayName','Vitalmap Systolic');
-errorbar(time, finapres_sys, finapres_err, 's-','Color',[.85 .33 .10],...
-    'MarkerFaceColor','y','LineWidth',1.5,'DisplayName','Finapres Systolic');
-plot(time, diastolic_vital, 'o--','Color',[0 .5 0],'MarkerFaceColor','g',...
-    'LineWidth',1.2,'DisplayName','Vitalmap Diastolic');
-plot(time, diastolic_finap, 's--','Color',[.7 0 .7],'MarkerFaceColor','m',...
-    'LineWidth',1.2,'DisplayName','Finapres Diastolic');
-xlabel('Time (min)','FontSize',12);
-ylabel('Blood Pressure (mmHg)','FontSize',12);
-title('BP Response to Cold Pressor','FontSize',14,'FontWeight','bold');
-xlim([0 13]); ylim([ymin1 ymax1]); grid on;
-legend('Location','northwest');
-hold off;
 
-% --- Plot 2: MAP Comparison with Error Bars ---
-subplot(1,2,2);
-hold on;
-% Determine y?limits
-ymin2 = min([MAP_vital_raw - map_err_vital, MAP_finap_shifted - map_err_finap]) - 2;
-ymax2 = max([MAP_vital_raw + map_err_vital, MAP_finap_shifted + map_err_finap]) + 2;
-% Shaded Cold Pressor (no legend entry)
-hCPT2 = fill([10 12 12 10],[ymin2 ymin2 ymax2 ymax2],[.8 .9 1],...
-    'EdgeColor','none','FaceAlpha',.3);
-hCPT2.Annotation.LegendInformation.IconDisplayStyle = 'off';
-% Plot MAP with error bars
+% Shaded CPT
+ymin = min([MAP_vital_raw - map_err_vital, ...
+            MAP_finap_shifted - map_err_finap, ...
+            central_map_12 - central_map_err]) - 2;
+ymax = max([MAP_vital_raw + map_err_vital, ...
+            MAP_finap_shifted + map_err_finap, ...
+            central_map_12 + central_map_err]) + 2;
+fill([10 12 12 10], [ymin ymin ymax ymax], [0.8 0.9 1], ...
+    'EdgeColor','none','FaceAlpha',0.3);
+text(11, ymax-1,'Cold Pressor Test','FontSize',12,'FontWeight','bold','HorizontalAlignment','center');
+
+% Plot Vitalmap MAP
 errorbar(MAP_time, MAP_vital_raw, map_err_vital, '-o','Color',[0 0.5 0],...
     'MarkerFaceColor','g','LineWidth',1.5,'DisplayName','Vitalmap MAP');
-errorbar(MAP_time, MAP_finap_shifted, map_err_finap,'-s','Color',[.85 .33 .10],...
+
+% Plot aligned Finapres MAP
+errorbar(MAP_time, MAP_finap_shifted, map_err_finap, '-s','Color',[.85 .33 .10],...
     'MarkerFaceColor','y','LineWidth',1.5,'DisplayName','Finapres MAP (aligned)');
-% Custom x?axis labels
+
+% Plot projected central MAP only at 12 min
+errorbar(12, central_map_12, central_map_err, 'd', 'Color','k', ...
+    'MarkerFaceColor','k', 'MarkerSize',8, 'LineWidth',1.5, ...
+    'DisplayName','Projected Central MAP (Casey et al. 2008)');
+
 xticks([10 11 12]);
 xticklabels({'baseline (0–10?min)','11','12'});
 xlabel('Time','FontSize',12);
 ylabel('Mean Arterial Pressure (mmHg)','FontSize',12);
-title('MAP: Vitalmap vs. Aligned Finapres','FontSize',14,'FontWeight','bold');
-xlim([9 13]); ylim([ymin2 ymax2]); grid on;
+title('MAP: Vitalmap, Finapres, and Central Estimate','FontSize',14,'FontWeight','bold');
+xlim([9 13]); ylim([ymin ymax]); grid on;
 legend('Location','northwest');
 hold off;
