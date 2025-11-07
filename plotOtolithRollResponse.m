@@ -34,6 +34,10 @@ t = tiledlayout(1, nCols);
 t.TileSpacing = 'none';             % no gaps between tiles
 t.Padding     = 'none';             % no outer margins
 
+t = tiledlayout(1, nCols);
+t.TileSpacing = 'none';
+t.Padding     = 'none';
+
 ax = gobjects(1,nCols);             % pre-allocate axes handles
 hBars = gobjects(1,nCols);          % store bar handles
 
@@ -138,5 +142,9 @@ for k = 1:nCols
 
     hold(axH,'off');
 end
+% Force MATLAB to finalize the layout
+drawnow;
 
+% Add small padding at bottom for filename annotation
+t.OuterPosition = [0, 0.05, 0.99, 0.95];
 plothelper.addFilenameAnnotation();
