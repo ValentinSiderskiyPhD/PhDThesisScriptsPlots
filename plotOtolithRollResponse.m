@@ -22,11 +22,10 @@ headR   = headR   * headScale;
 eyeLen  = eyeLen  * headScale;
 noseLen = noseLen * headScale;
 
-% Optional helper (ignore if you don't use it)
-if exist('PlotHelper','class') == 8 || exist('PlotHelper','class') == 2
+try
     plothelper = PlotHelper();
-else
-    plothelper = [];
+catch ME
+    rethrow(ME);   % stops the script with MATLAB’s full native error message
 end
 
 % -------------------- Layout (R2020b OK) --------------------
@@ -51,7 +50,7 @@ for k = 1:nCols
     ax(k) = nexttile(t, k);
     axk = ax(k);                    % alias for brevity
     hold(axk,'on');
-    axk.PositionConstraint = 'innerposition';
+%    axk.PositionConstraint = 'innerposition';
 
     % bars
     x = [1 2];  y = [a_uL, a_sL];
@@ -61,7 +60,7 @@ for k = 1:nCols
     % axes formatting
     xlim(axk, [0.5 2.5]);
     ylim(axk, [-1.2 1.3]);
-    set(axk, 'XTick', [1 2], 'XTickLabel', {'a_{utricle}','a_{saccule}'}, ...
+    set(axk, 'XTick', [1 2], 'XTickLabel', {'a_{utricle-lat}','a_{saccule-vert}'}, ...
              'FontName','Arial','YGrid','on','Box','on','FontSize',12);
     if k == 1
         ylabel(axk, 'Acceleration (G)');
